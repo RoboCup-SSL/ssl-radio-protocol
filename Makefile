@@ -2,6 +2,7 @@ buildDir=build
 
 #change to Debug for debug mode
 buildType=Release
+# buildType=Debug
 
 all: build
 

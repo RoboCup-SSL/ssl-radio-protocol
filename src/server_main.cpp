@@ -1,0 +1,60 @@
+//========================================================================
+// To the extent possible under law, the author(s) have dedicated all copyright
+// and related and neighboring rights to this software to the public domain
+// worldwide. This software is distributed without any warranty.
+// You should have received a copy of the CC0 Public Domain Dedication along
+// with this software. If not, see
+// <http://creativecommons.org/publicdomain/zero/1.0/>.
+//========================================================================
+/*!
+  \file    server_main.cpp
+  \brief   An example robocup ssl shared radio protocol server.
+  \author  Joydeep Biswas [joydeepb@ri.cs.cmu.edu], 2015
+*/
+//========================================================================
+
+#include <string>
+#include <arpa/inet.h>
+#include <math.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include "radio_protocol_command.pb.h"
+#include "radio_protocol_wrapper.pb.h"
+
+int main(int argc, char *argv[]) {
+  int socket_fd = 0;
+  int port_number = 10010;
+
+  if (argc > 1) {
+    port_number = atoi(argv[1]);
+  }
+
+  socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+  sockaddr_in server_address;
+  bzero(&server_address, sizeof(server_address));
+  server_address.sin_family = AF_INET;
+  server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+  server_address.sin_port = htons(port_number);
+  bind(socket_fd,
+       reinterpret_cast<sockaddr*>(&server_address),
+       sizeof(server_address));
+  sockaddr_in client_address;
+  bzero(&client_address, sizeof(client_address));
+  while(true) {
+    char buffer[65536];
+    socklen_t len = sizeof(client_address);
+    int num_bytes = recvfrom(
+        socket_fd,
+        buffer,
+        sizeof(buffer),
+        0,
+        reinterpret_cast<sockaddr*>(&client_address),
+        reinterpret_cast<socklen_t*>(&len));
+    printf("Received message from %s\n",
+           inet_ntoa(client_address.sin_addr));
+  }
+}
