@@ -25,6 +25,23 @@
 #include "radio_protocol_command.pb.h"
 #include "radio_protocol_wrapper.pb.h"
 
+void PrintRadioCommand(const RadioProtocolCommand& cmd) {
+  printf("Robot %X : vx=%6.3f vy=%6.3f vr=%6.3f",
+         cmd.robot_id(),
+         cmd.velocity_x(),
+         cmd.velocity_y(),
+         cmd.velocity_r());
+  if (cmd.has_flat_kick()) {
+    printf(" flat_kick=%6.3f", cmd.flat_kick());
+  } else if (cmd.has_chip_kick()) {
+    printf(" chip_kick=%6.3f", cmd.chip_kick());
+  }
+  if (cmd.has_dribbler_spin()) {
+    printf(" dribbler=%6.3f", cmd.dribbler_spin());
+  }
+  printf("\n");
+}
+
 int main(int argc, char *argv[]) {
   int socket_fd = 0;
   int port_number = 10010;
@@ -44,17 +61,31 @@ int main(int argc, char *argv[]) {
        sizeof(server_address));
   sockaddr_in client_address;
   bzero(&client_address, sizeof(client_address));
-  while(true) {
+  RadioProtocolWrapper radio_message;
+  while (true) {
     char buffer[65536];
     socklen_t len = sizeof(client_address);
-    int num_bytes = recvfrom(
+    const int num_bytes = recvfrom(
         socket_fd,
         buffer,
         sizeof(buffer),
         0,
         reinterpret_cast<sockaddr*>(&client_address),
         reinterpret_cast<socklen_t*>(&len));
-    printf("Received message from %s\n",
-           inet_ntoa(client_address.sin_addr));
+    const std::string client_name =
+        inet_ntoa(client_address.sin_addr);
+    if (radio_message.ParseFromArray(buffer, num_bytes)) {
+      const int num_robots = radio_message.command_size();
+      printf("%d robot command(s) received from %s\n",
+             num_robots,
+             client_name.c_str());
+      for (int i = 0; i < num_robots; ++i) {
+        PrintRadioCommand(radio_message.command(i));
+      }
+      printf("\n");
+    } else {
+      printf("Error parsing protobuf received from %s\n",
+             client_name.c_str());
+    }
   }
 }
