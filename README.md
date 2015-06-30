@@ -7,7 +7,7 @@ technical challenge of the Small Size League at RoboCup 2015.
 Also included is source code to implement a simple client and server to
 communicate using the specified protocol.
 
-For details regarding the protobuf definitions, see [protobuf](protobuf).
+For details regarding the protobuf definitions, read the contents of the [proto](../tree/master/proto) directory.
 
 ## Requirements
 
